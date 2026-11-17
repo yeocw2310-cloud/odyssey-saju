@@ -49,7 +49,11 @@
   .chip{appearance:none;border:1.5px solid var(--ink);background:var(--paper);color:var(--ink);border-radius:999px;padding:7px 13px;font:inherit;font-size:14px;font-weight:500;cursor:pointer;line-height:1.3}
   .chip.on{background:var(--ink);color:var(--lime)}
   .chip.etc{border-style:dashed}
-  .joblist{max-height:240px;overflow:auto;margin-top:10px;border-top:1px solid var(--line)}
+  .cats{display:flex;gap:6px;overflow-x:auto;padding:12px 0 4px;margin:0 -2px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .cats::-webkit-scrollbar{display:none}
+  .cat{flex:none;appearance:none;border:1.2px solid var(--ink);background:var(--paper);border-radius:999px;padding:5px 11px;font:inherit;font-size:13px;cursor:pointer;white-space:nowrap}
+  .cat.on{background:var(--ink);color:var(--lime)}
+  .joblist{max-height:300px;overflow:auto;margin-top:10px;border-top:1px solid var(--line)}
   .job{display:flex;justify-content:space-between;align-items:center;padding:11px 2px;border-bottom:1px solid var(--line);cursor:pointer;font-size:15px}
   .job small{color:var(--muted);font-size:12px}
   .job.on{font-weight:700}
@@ -268,30 +272,208 @@ const DIR=[
  ["판을 키우는 사람으로","판을 넓게 키우는","‘{t}’ 업무를 다른 시장·채널로 넓혀보기","전략·사업개발 쪽 역할로 이동","더 큰 판에서 {j} 일을 하는 의사결정자"],
  ["패턴을 읽는 사람으로","보이지 않는 패턴을 읽는","‘{t}’ 업무에서 데이터나 관찰로 인사이트 1개 뽑기","리서치·분석 역할 맡기","{j} 분야에서 ‘왜’를 설명하는 사람"]
 ];
-const JOBS=[
- ["기획·PM",["서비스 기획","요구사항 정리","일정·리소스 관리","데이터 분석","이해관계자 조율"]],
- ["마케팅",["콘텐츠 제작","광고 운영","데이터 분석","브랜드 기획","SNS 운영"]],
- ["UI/UX 디자인",["화면 설계","비주얼 디자인","사용자 리서치","디자인 시스템","프로토타이핑"]],
- ["그래픽·브랜드 디자인",["로고·아이덴티티","편집 디자인","패키지","일러스트","브랜드 가이드"]],
- ["개발",["프론트엔드","백엔드","인프라·운영","코드 리뷰","기술 문서"]],
- ["데이터 분석",["지표 설계","대시보드","SQL·쿼리","실험 분석","리포트 작성"]],
- ["영업·세일즈",["고객 발굴","제안·협상","관계 관리","실적 관리"]],
- ["인사·HR",["채용","교육","평가·보상","조직문화"]],
- ["재무·회계",["결산","예산","세무","자금 관리"]],
- ["경영지원·총무",["구매","시설 관리","계약","사무 운영"]],
- ["CS·고객상담",["상담","불만 처리","매뉴얼 관리","VOC 분석"]],
- ["MD·커머스",["상품 소싱","가격 정책","기획전","재고 관리"]],
- ["교사·강사",["수업","교재 개발","학생 상담","평가"]],
- ["간호·의료",["환자 케어","처치","기록","보호자 소통"]],
- ["연구원",["실험","논문","데이터 분석","과제 관리"]],
- ["공무원·공공기관",["민원 응대","행정 문서","정책 집행","예산"]],
- ["에디터·작가",["기획","취재","글쓰기","편집"]],
- ["영상·콘텐츠 제작",["촬영","편집","기획","채널 운영"]],
- ["요식업·바리스타",["조리","메뉴 개발","매장 운영","손님 응대"]],
- ["자영업·사업",["매장·사업 운영","마케팅","회계","고객 관리"]],
- ["생산·제조",["공정 관리","품질","설비","안전"]],
- ["학생·취준생",["전공 공부","프로젝트","대외활동","아르바이트"]]
+// 직군 → 직무:상세업무1,상세업무2,...
+const JOB_CATS=[
+ ["개발",[
+  "프론트엔드 개발자:웹 화면 구현,API 연동,성능 최적화,디자인 시스템 개발,코드 리뷰",
+  "백엔드 개발자:API 설계·개발,DB 설계,서버 운영,성능·장애 대응,코드 리뷰",
+  "풀스택 개발자:웹 화면 구현,서버 개발,DB 설계,배포·운영,신규 기능 개발",
+  "앱 개발자(iOS·Android):앱 화면 구현,앱 출시·업데이트,API 연동,크래시 대응,성능 개선",
+  "DevOps·인프라 엔지니어:클라우드 인프라 구축,CI/CD 구축,모니터링,보안 설정,비용 최적화",
+  "데이터 엔지니어:데이터 파이프라인 구축,데이터 웨어하우스 관리,ETL 개발,데이터 품질 관리",
+  "AI·머신러닝 엔지니어:모델 개발·학습,데이터 전처리,모델 서빙,LLM 활용 개발,성능 평가",
+  "QA·테스트 엔지니어:테스트 설계,테스트 자동화,버그 리포트,품질 기준 관리",
+  "정보보안 전문가:보안 점검,취약점 분석,보안 정책 수립,침해 대응,보안 교육",
+  "임베디드·펌웨어 개발자:펌웨어 개발,하드웨어 연동,디버깅,드라이버 개발",
+  "게임 클라이언트·서버 개발자:게임 로직 구현,엔진 활용 개발,서버 개발,최적화",
+  "SI·솔루션 개발자:요구사항 분석,시스템 구축,고객사 커뮤니케이션,유지보수",
+  "IT 시스템 운영·헬프데스크:시스템 운영,장비·계정 관리,사용자 지원,장애 처리"]],
+ ["데이터·AI",[
+  "데이터 분석가:지표 설계,대시보드 제작,SQL 분석,A/B 테스트 분석,인사이트 리포트",
+  "데이터 사이언티스트:예측 모델링,통계 분석,실험 설계,추천·분류 모델 개발",
+  "BI 분석가:리포트 자동화,경영 지표 관리,대시보드 운영,데이터 정합성 관리",
+  "AI 서비스 기획자:AI 기능 기획,프롬프트 설계,데이터셋 기획,성능 검증",
+  "데이터 라벨러·AI 트레이너:데이터 라벨링,품질 검수,가이드라인 작성,AI 응답 평가"]],
+ ["기획·전략",[
+  "서비스 기획자:화면·기능 기획,요구사항 정의,정책 설계,데이터 분석,일정 관리",
+  "PM·PO:제품 로드맵 수립,우선순위 결정,이해관계자 조율,지표 관리,출시 관리",
+  "사업 기획·개발:신규 사업 발굴,시장 조사,사업계획서 작성,제휴·파트너십",
+  "전략 기획:경영 전략 수립,KPI 관리,경영 보고,예산 기획,중장기 계획",
+  "경영 컨설턴트:문제 진단,리서치·분석,제안서 작성,고객 워크숍,실행 지원",
+  "상품 기획(제조):신제품 기획,시장·경쟁 분석,원가 검토,출시 관리",
+  "게임 기획자:시스템 기획,레벨 디자인,밸런스 조정,콘텐츠 기획,라이브 운영",
+  "ESG·지속가능경영 담당:ESG 전략 수립,지속가능성 보고서,탄소 관리,평가 대응"]],
+ ["디자인",[
+  "UI/UX 디자이너:화면 설계,사용자 리서치,프로토타이핑,디자인 시스템,사용성 테스트",
+  "프로덕트 디자이너:문제 정의,UX 설계,UI 디자인,데이터 기반 개선,개발 협업",
+  "BX·브랜드 디자이너:브랜드 아이덴티티,로고·심볼,브랜드 가이드,패키지",
+  "그래픽·편집 디자이너:광고·배너 디자인,편집 디자인,인쇄물 제작,SNS 콘텐츠",
+  "영상·모션 디자이너:모션 그래픽,영상 편집,타이틀 디자인,광고 영상 제작",
+  "3D·캐릭터 디자이너:3D 모델링,캐릭터 디자인,렌더링,애니메이션",
+  "일러스트레이터·웹툰 작가:일러스트 작업,캐릭터 작업,웹툰 연재,외주 작업",
+  "패션 디자이너:컬렉션 기획,디자인 스케치,원단·소재 선정,샘플 제작",
+  "인테리어 디자이너:공간 기획,도면 작성,자재 선정,시공 감리,고객 상담",
+  "산업·제품 디자이너:제품 디자인,목업 제작,CMF 기획,양산 협업",
+  "공간·VMD 디자이너:매장 연출,디스플레이,팝업 공간 기획,시즌 VMD"]],
+ ["마케팅·광고·홍보",[
+  "퍼포먼스 마케터:광고 캠페인 운영,예산·ROAS 관리,광고 소재 테스트,성과 분석",
+  "콘텐츠 마케터:콘텐츠 기획·제작,블로그·뉴스레터,SEO,성과 분석",
+  "브랜드 마케터:브랜드 전략,캠페인 기획,브랜드 협업,시장 조사",
+  "CRM 마케터:고객 세그먼트,메시지·푸시 운영,리텐션 관리,캠페인 자동화",
+  "그로스 마케터:퍼널 분석,실험 설계,가입·전환 개선,데이터 분석",
+  "SNS·커뮤니티 매니저:SNS 채널 운영,콘텐츠 제작,커뮤니티 관리,인플루언서 협업",
+  "PR·홍보 담당:보도자료 작성,언론 대응,위기 관리,사내 커뮤니케이션",
+  "광고 AE·기획자:광고주 커뮤니케이션,캠페인 기획,제안서 작성,제작 관리",
+  "카피라이터:광고 카피 작성,슬로건·네이밍,콘텐츠 문구,캠페인 아이디어",
+  "MD·커머스 마케터:프로모션 기획,기획전 운영,매출 분석,제휴 마케팅",
+  "행사·이벤트 기획자:행사 기획,공간·업체 섭외,현장 운영,예산 관리"]],
+ ["영업·고객",[
+  "B2B 영업:신규 고객 발굴,제안·입찰,계약 협상,고객 관계 관리,실적 관리",
+  "B2C·리테일 영업:고객 상담,판매,매장 실적 관리,프로모션 실행",
+  "기술영업:기술 제안,고객 기술 상담,데모·POC,견적 작성",
+  "해외영업·무역:해외 바이어 발굴,수출입 실무,계약·협상,전시회 참가",
+  "영업관리·영업지원:실적 집계,영업 전략 지원,대리점 관리,계약 관리",
+  "보험설계사·FC:고객 상담,상품 설계,계약 관리,고객 관리",
+  "부동산 중개사:매물 관리,고객 상담,계약 진행,시세 조사",
+  "자동차 영업:차량 상담,시승 안내,계약·출고,고객 관리",
+  "CS·고객상담:전화·채팅 상담,불만 처리,FAQ 관리,VOC 분석",
+  "CX·고객경험 매니저:고객 여정 분석,서비스 개선,VOC 분석,CS 정책 수립",
+  "텔레마케터:아웃바운드 상담,상품 안내,계약 유치,고객 관리"]],
+ ["경영·인사·재무",[
+  "인사(HR) 담당:인사 제도 운영,평가·보상,근태·급여,노무 관리",
+  "채용 담당·리크루터:채용 공고,후보자 발굴,면접 운영,채용 브랜딩",
+  "조직문화·HRD 담당:조직문화 프로그램,사내 교육,리더십 개발,구성원 소통",
+  "재무 담당:자금 관리,예산 관리,재무 분석,투자 검토",
+  "회계 담당:결산,전표 처리,재무제표 작성,감사 대응",
+  "세무 담당·세무사:세무 신고,세무 상담,절세 검토,기장 대리",
+  "총무·경영지원:구매·자산 관리,시설 관리,복리후생,계약 관리",
+  "법무 담당:계약서 검토,법률 자문,분쟁 대응,컴플라이언스",
+  "IR·투자 담당:투자 유치,IR 자료 작성,투자자 커뮤니케이션,공시",
+  "비서·사무보조:일정 관리,문서 작성,손님 응대,사무 지원",
+  "구매·조달 담당:공급사 발굴,단가 협상,발주 관리,원가 절감"]],
+ ["커머스·MD·물류",[
+  "온라인 MD:상품 소싱,가격·마진 관리,기획전 운영,판매 분석",
+  "오프라인·리테일 MD:상품 구성,매장 운영 지원,재고 관리,판매 분석",
+  "바이어:해외·국내 소싱,협력사 협상,트렌드 조사,상품 선정",
+  "이커머스 운영자:스토어 운영,상품 등록,주문·CS 관리,프로모션",
+  "물류·SCM 담당:재고 관리,입출고 관리,배송 관리,수요 예측",
+  "유통 관리:거래처 관리,유통 채널 관리,판매 계획,정산",
+  "매장 관리자·점장:매장 운영,직원 관리,매출 관리,재고 관리",
+  "배송·운송 기사:배송·운송,경로 관리,차량 관리,고객 응대"]],
+ ["미디어·콘텐츠·출판",[
+  "방송 PD:프로그램 기획,촬영 연출,편집 관리,출연자 섭외",
+  "기자:취재,기사 작성,인터뷰,데스크 협업",
+  "에디터:콘텐츠 기획,원고 편집,인터뷰,교정·교열",
+  "출판 편집자:원고 기획,편집·교정,저자 관리,제작 관리",
+  "작가·시나리오 작가:원고 집필,자료 조사,구성 작업,각색",
+  "영상 편집자:컷 편집,자막·효과,색보정,사운드 편집",
+  "촬영 감독·포토그래퍼:촬영,조명 세팅,보정,장비 관리",
+  "유튜버·크리에이터:콘텐츠 기획,촬영·편집,채널 운영,광고 협업",
+  "아나운서·MC·쇼호스트:방송 진행,원고 작성,행사 진행,상품 소개",
+  "번역가·통역사:문서 번역,통역,현지화,감수",
+  "웹소설 작가:연재 원고 집필,세계관 설정,독자 소통,플랫폼 계약",
+  "음악가·작곡가:작곡·편곡,공연,레코딩,음원 발매",
+  "배우·모델:오디션,촬영·공연,연기·포즈 연습,이미지 관리",
+  "공연·전시 기획자:공연·전시 기획,아티스트 섭외,예산 관리,현장 운영"]],
+ ["교육",[
+  "초·중·고 교사:수업,학급 운영,학생 상담,평가,행정 업무",
+  "학원 강사:수업,교재 준비,학생 관리,학부모 상담",
+  "과외·튜터:1:1 수업,학습 계획,교재 준비,학부모 소통",
+  "유치원·보육교사:놀이 수업,아이 돌봄,부모 상담,행사 준비",
+  "특수교사:개별화 수업,행동 지원,보호자 상담,교구 제작",
+  "기업 교육 담당:교육 기획,강사 섭외,교육 운영,교육 효과 측정",
+  "교육 콘텐츠 기획자:커리큘럼 설계,강의 기획,교재 개발,에듀테크 기획",
+  "교수·강사(대학):강의,연구,논문 지도,학회 활동",
+  "평생교육사·문화센터 강사:프로그램 기획,강의,수강생 관리,기관 협력",
+  "예체능 강사:실기 지도,레슨 기획,공연·대회 준비,수강생 관리"]],
+ ["의료·보건·바이오",[
+  "간호사:환자 간호,투약·처치,간호 기록,보호자 소통,교대 근무",
+  "의사:진료,수술·처치,처방,환자 상담,연구",
+  "약사:조제,복약 지도,의약품 관리,약국 운영",
+  "치과위생사·간호조무사:진료 보조,환자 안내,예약 관리,위생 관리",
+  "물리·작업치료사:재활 치료,평가,운동 처방,치료 기록",
+  "임상병리사·방사선사:검사 수행,장비 관리,결과 분석,기록 관리",
+  "임상연구(CRA·CRC):임상시험 모니터링,기관 관리,문서 관리,규정 준수",
+  "바이오·제약 연구원:실험 설계,실험 수행,데이터 분석,논문·보고서",
+  "제약·의료기기 영업:병원 영업,제품 설명회,학술 지원,거래처 관리",
+  "영양사:식단 관리,급식 운영,위생 관리,영양 상담",
+  "수의사·동물보건사:동물 진료,수술 보조,보호자 상담,입원 관리",
+  "심리상담사·임상심리사:심리 상담,심리 검사,상담 기록,프로그램 운영",
+  "요양보호사·돌봄 종사자:어르신 돌봄,생활 지원,건강 체크,보호자 소통"]],
+ ["엔지니어링·제조·생산",[
+  "기계 엔지니어:기계 설계,CAD 작업,시제품 검증,양산 지원",
+  "전기·전자 엔지니어:회로 설계,부품 선정,테스트,인증 대응",
+  "반도체 엔지니어:공정 개발,수율 개선,장비 관리,데이터 분석",
+  "화학·소재 엔지니어:소재 개발,배합 실험,공정 개선,분석",
+  "생산관리:생산 계획,공정 관리,인력 배치,원가 관리",
+  "품질관리(QA·QC):품질 검사,불량 분석,품질 시스템 운영,고객 클레임 대응",
+  "공정·설비 엔지니어:공정 개선,설비 유지보수,자동화,안전 관리",
+  "R&D 연구원:선행 연구,특허 출원,실험·검증,기술 보고서",
+  "생산직·기술직:제품 생산,장비 운전,검사,정리정돈",
+  "자동차 정비사:차량 점검,정비·수리,부품 교체,고객 설명",
+  "전기·설비 기술자:전기 공사,설비 설치,점검·보수,안전 관리",
+  "환경·안전 관리자:안전 점검,환경 인허가,안전 교육,사고 예방"]],
+ ["건설·건축·부동산",[
+  "건축 설계사:설계 도면,인허가,디자인 검토,건축주 협의",
+  "시공 관리·현장 관리자:공정 관리,현장 안전,협력사 관리,원가 관리",
+  "토목 엔지니어:토목 설계,구조 검토,현장 관리,측량",
+  "인테리어 시공:현장 시공,자재 발주,공정 관리,고객 응대",
+  "부동산 개발·자산관리:부지 검토,사업성 분석,임대 관리,자산 운용",
+  "감정평가사·공인중개사:부동산 감정,시세 조사,계약 업무,고객 상담",
+  "조경 기술자:조경 설계,식재,시공 관리,유지 관리"]],
+ ["금융·보험",[
+  "은행원:창구 업무,대출 상담,자산 관리 상담,영업 목표 관리",
+  "증권·투자 전문가:투자 분석,고객 자산 관리,매매 업무,리서치",
+  "자산운용·펀드매니저:포트폴리오 운용,종목 분석,리스크 관리,운용 보고",
+  "애널리스트:산업 분석,기업 분석,리포트 작성,투자 의견",
+  "리스크·준법 관리:리스크 측정,내부통제,규정 준수,감사 대응",
+  "보험 언더라이터·손해사정:계약 심사,보험금 심사,사고 조사,손해 평가",
+  "핀테크 서비스 담당:금융 상품 기획,제휴 관리,규제 대응,서비스 운영",
+  "회계사(CPA):회계 감사,재무 실사,자문,세무 업무"]],
+ ["공공·법률·사회",[
+  "공무원(행정직):민원 처리,행정 문서,정책 집행,예산 관리",
+  "공무원(기술·전문직):기술 검토,인허가,현장 점검,사업 관리",
+  "공공기관 직원:사업 운영,평가·심사,대외 협력,보고서 작성",
+  "변호사:법률 자문,소송 대리,계약 검토,의뢰인 상담",
+  "법무사·노무사·행정사:등기·서류 대행,노무 자문,인허가 대행,상담",
+  "사회복지사:사례 관리,복지 상담,프로그램 운영,지역 연계",
+  "경찰·소방·군인:현장 대응,순찰·훈련,민원 처리,안전 관리",
+  "비영리·NGO 활동가:캠페인 기획,후원자 관리,현장 활동,정책 제안",
+  "정치·정책 연구원:정책 연구,보고서 작성,자료 분석,토론회 기획",
+  "종교인:예배·의식 진행,상담,공동체 운영,교육"]],
+ ["서비스·요식·뷰티·여행",[
+  "셰프·조리사:조리,메뉴 개발,식재료 관리,주방 관리",
+  "바리스타·카페 운영:음료 제조,원두 관리,매장 운영,손님 응대",
+  "제과·제빵사:제과·제빵,신메뉴 개발,재료 관리,위생 관리",
+  "호텔리어:프런트 업무,객실 관리,고객 응대,예약 관리",
+  "항공 승무원:기내 서비스,안전 업무,승객 응대,비행 준비",
+  "여행 가이드·여행사 직원:여행 상품 기획,인솔·가이드,예약 관리,고객 상담",
+  "헤어 디자이너:커트·펌·염색,고객 상담,트렌드 연구,매장 운영",
+  "메이크업·네일·피부관리사:시술,고객 상담,제품 관리,예약 관리",
+  "피트니스 트레이너·필라테스 강사:PT·레슨,운동 프로그램 설계,회원 관리,체형 분석",
+  "웨딩·파티 플래너:행사 기획,업체 섭외,예산 관리,현장 진행",
+  "플로리스트:꽃 디자인,꽃 수업,웨딩·행사 장식,매장 운영",
+  "반려동물 미용·훈련사:미용,행동 교정,보호자 상담,매장 운영",
+  "매장 서비스·아르바이트:손님 응대,계산,진열·정리,매장 청결"]],
+ ["농림·어업·기타 현장",[
+  "농업인·스마트팜:작물 재배,시설 관리,판로 관리,가공·판매",
+  "어업·수산업:조업,양식 관리,수산물 가공,유통",
+  "운전·택시·화물 기사:운행,차량 관리,고객 응대,경로 관리",
+  "경비·시설관리:순찰,시설 점검,출입 관리,민원 응대",
+  "청소·환경미화:청소,위생 관리,분리수거,장비 관리"]],
+ ["자영업·프리랜서·기타",[
+  "자영업자·소상공인:매장 운영,마케팅,회계·세무,직원 관리,고객 관리",
+  "스타트업 창업자:사업 기획,투자 유치,팀 빌딩,제품 개발,영업",
+  "프리랜서:프로젝트 수주,작업 수행,일정 관리,정산·세금",
+  "1인 브랜드·온라인 셀러:상품 기획,스토어 운영,SNS 홍보,CS",
+  "학생(대학·대학원):전공 공부,연구·프로젝트,대외활동,아르바이트",
+  "취업·이직 준비생:자기소개서 작성,포트폴리오 준비,자격증 공부,면접 준비",
+  "전업주부·육아:살림,육아,가계 관리,지역 커뮤니티",
+  "휴직·쉬는 중:재충전,자기계발,진로 탐색,건강 관리"]]
 ];
+const JOBS=[];JOB_CATS.forEach(([cat,list],ci)=>list.forEach(l=>{const[i]=[l.indexOf(":")];JOBS.push([l.slice(0,i),l.slice(i+1).split(","),cat,ci]);}));
+
+function resolveJob(o){if(o.jn){const k=JOBS.findIndex(x=>x[0]===o.jn);if(k>=0)return k;}const j=+o.j;return(o.jn||!JOBS[j])?-1:j;}
 // 잘하는 것 × 오행(목화토금수) → 옮겨갈 수 있는 역할
 const STRENGTHS=[
  ["말하기·설득",["초기 스타트업 세일즈","강연가·MC","부동산·중개","협상 전문가","해외 영업"],1],
@@ -475,10 +657,10 @@ function compute(st){
 // ---------- 공유 키 ----------
 function toHex(s){return[...new TextEncoder().encode(s)].map(b=>b.toString(16).padStart(2,"0")).join("");}
 function fromHex(h){const a=h.match(/.{2}/g)||[];return new TextDecoder().decode(new Uint8Array(a.map(x=>parseInt(x,16))));}
-function makeKey(st){return"r-"+toHex(JSON.stringify({n:st.n,d:st.d,h:st.h??-1,j:st.j,jc:st.jc,t:st.t,tc:st.tc,s:st.s,i:st.i}));}
+function makeKey(st){return"r-"+toHex(JSON.stringify({n:st.n,d:st.d,h:st.h??-1,jn:st.j>=0?JOBS[st.j][0]:"",j:st.j,jc:st.jc,t:st.t,tc:st.tc,s:st.s,i:st.i}));}
 function parseKey(k){const m=/^r-([0-9a-f]+)$/.exec(k||"");if(!m)return null;
   try{const o=JSON.parse(fromHex(m[1]));if(!o.n||!/^\d{4}-\d{2}-\d{2}$/.test(o.d)||(o.s||[]).length<2||!(o.i||[]).length)return null;
-    return{n:String(o.n).slice(0,10),d:o.d,h:(Number.isInteger(+o.h)&&+o.h>=0&&+o.h<12)?+o.h:-1,j:+o.j,jc:String(o.jc||"").slice(0,20),t:(o.t||[]).map(Number),tc:String(o.tc||"").slice(0,30),s:o.s.map(Number).filter(x=>STRENGTHS[x]),i:o.i.map(Number).filter(x=>INTERESTS[x])};}catch(e){return null;}}
+    return{n:String(o.n).slice(0,10),d:o.d,h:(Number.isInteger(+o.h)&&+o.h>=0&&+o.h<12)?+o.h:-1,j:resolveJob(o),jc:String(o.jc||"").slice(0,20),t:(o.t||[]).map(Number),tc:String(o.tc||"").slice(0,30),s:o.s.map(Number).filter(x=>STRENGTHS[x]),i:o.i.map(Number).filter(x=>INTERESTS[x])};}catch(e){return null;}}
 
 const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -501,15 +683,23 @@ function renderStep(){
   if(step===1){
     const picked=S.j>=0;
     B.innerHTML=`<div class="stitle">지금 하는 일</div><div class="shint">Path 1은 현재 일에서 출발해요.</div>
-      ${picked?`<div class="picked"><span style="width:10px;height:10px;border-radius:50%;background:var(--lime);border:1.5px solid var(--ink)"></span>${esc(JOBS[S.j][0])}<button id="rePick">변경</button></div>
+      ${picked?`<div class="picked"><span style="width:10px;height:10px;border-radius:50%;background:var(--lime);border:1.5px solid var(--ink)"></span>${esc(JOBS[S.j][0])}<small class="muted" style="font-weight:400">${esc(JOBS[S.j][2])}</small><button id="rePick">변경</button></div>
         <label class="l" style="margin-top:18px">주로 하는 업무 (여러 개 가능)</label><div class="chips">${chipHTML(JOBS[S.j][1],S.t,"t",9)}</div>
         <div class="field"><label class="l" for="tc">기타 업무 (선택)</label><input class="t sm" id="tc" maxlength="30" placeholder="목록에 없다면 짧게 적어주세요" value="${esc(S.tc)}"></div>`
-      :`<div class="field"><input class="t" id="jq" placeholder="직업 검색 (예: 마케팅, 개발)" autocomplete="off"></div><div class="joblist" id="jl"></div>
-        <div class="field"><label class="l" for="jc">기타 · 목록에 없다면 직접 입력</label><input class="t sm" id="jc" maxlength="20" placeholder="예: 플로리스트" value="${esc(S.jc)}"></div>
-        <div class="field ${S.jc?"":"hidden"}" id="tcWrap"><label class="l" for="tc">주로 하는 업무</label><input class="t sm" id="tc" maxlength="30" placeholder="예: 꽃 수업, 웨딩 장식" value="${esc(S.tc)}"></div>`}`;
+      :`<div class="field"><input class="t" id="jq" placeholder="직업 검색 (예: 간호사, 바리스타)" autocomplete="off"></div>
+        <div class="cats" id="cats"><button class="cat on" data-c="-1">전체</button>${JOB_CATS.map(([c],k)=>`<button class="cat" data-c="${k}">${esc(c)}</button>`).join("")}</div>
+        <div class="joblist" id="jl"></div>
+        <div class="field"><label class="l" for="jc">기타 · 목록에 없다면 직접 입력</label><input class="t sm" id="jc" maxlength="20" placeholder="예: 도선사" value="${esc(S.jc)}"></div>
+        <div class="field ${S.jc?"":"hidden"}" id="tcWrap"><label class="l" for="tc">주로 하는 업무</label><input class="t sm" id="tc" maxlength="30" placeholder="예: 선박 입출항 안내" value="${esc(S.tc)}"></div>`}`;
     if(picked){$("#rePick").onclick=()=>{S.j=-1;S.t=[];renderStep();};}
-    else{const draw=q=>{$("#jl").innerHTML=JOBS.map((x,k)=>[x,k]).filter(([x])=>!q||x[0].includes(q)||x[1].some(t=>t.includes(q))).map(([x,k])=>`<div class="job" data-j="${k}"><span>${esc(x[0])}<br><small>${esc(x[1].slice(0,3).join(" · "))}</small></span></div>`).join("")||`<p class="muted" style="padding:12px 0">검색 결과가 없어요. 아래 ‘기타’에 적어주세요.</p>`;};
-      draw("");$("#jq").oninput=e=>draw(e.target.value.trim());
+    else{let cat=-1,q="";
+      const draw=()=>{const qq=q.replace(/\s/g,"");
+        const rows=JOBS.map((x,k)=>[x,k]).filter(([x])=>(cat<0||x[3]===cat)&&(!qq||x[0].replace(/\s/g,"").includes(qq)||x[2].includes(qq)||x[1].some(t=>t.replace(/\s/g,"").includes(qq))));
+        $("#jl").innerHTML=rows.length?rows.map(([x,k])=>`<div class="job" data-j="${k}"><span>${esc(x[0])}<br><small>${esc(x[2])} · ${esc(x[1].slice(0,3).join(" · "))}</small></span></div>`).join(""):`<p class="muted" style="padding:12px 0">검색 결과가 없어요. 아래 ‘기타’에 직접 적어주세요.</p>`;
+        $("#jcount").textContent=`${rows.length}개 직무`;};
+      $("#jl").insertAdjacentHTML("beforebegin",`<p class="muted" id="jcount" style="margin-top:8px"></p>`);
+      draw();$("#jq").oninput=e=>{q=e.target.value.trim();if(q&&cat>=0){cat=-1;$("#cats").querySelectorAll(".cat").forEach(x=>x.classList.toggle("on",x.dataset.c==="-1"));}draw();};
+      $("#cats").onclick=e=>{const b=e.target.closest(".cat");if(!b)return;cat=+b.dataset.c;$("#cats").querySelectorAll(".cat").forEach(x=>x.classList.toggle("on",x===b));draw();};
       $("#jl").onclick=e=>{const el=e.target.closest(".job");if(!el)return;S.j=+el.dataset.j;S.jc="";S.t=[];renderStep();};
       $("#jc").oninput=e=>{S.jc=e.target.value.trim();$("#tcWrap").classList.toggle("hidden",!S.jc);valid();};}
     const tc=$("#tc");if(tc)tc.oninput=e=>{S.tc=e.target.value.trim();valid();};
@@ -824,7 +1014,7 @@ $("#savedList").addEventListener("click",async e=>{
 // ---------- 시작 ----------
 function sanitize(o){
   try{if(!o||!o.n||!/^\d{4}-\d{2}-\d{2}$/.test(o.d)||(o.s||[]).length<2||!(o.i||[]).length)return null;
-    return{n:String(o.n).slice(0,10),d:o.d,h:(Number.isInteger(+o.h)&&+o.h>=0&&+o.h<12)?+o.h:-1,j:+o.j,jc:String(o.jc||"").slice(0,20),t:(o.t||[]).map(Number),tc:String(o.tc||"").slice(0,30),s:o.s.map(Number).filter(x=>STRENGTHS[x]),i:o.i.map(Number).filter(x=>INTERESTS[x])};}catch(e){return null;}
+    return{n:String(o.n).slice(0,10),d:o.d,h:(Number.isInteger(+o.h)&&+o.h>=0&&+o.h<12)?+o.h:-1,j:resolveJob(o),jc:String(o.jc||"").slice(0,20),t:(o.t||[]).map(Number),tc:String(o.tc||"").slice(0,30),s:o.s.map(Number).filter(x=>STRENGTHS[x]),i:o.i.map(Number).filter(x=>INTERESTS[x])};}catch(e){return null;}
 }
 async function route(){
   const rid=new URLSearchParams(location.search).get("r");
