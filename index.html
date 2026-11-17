@@ -1043,6 +1043,40 @@ renderResult=function(R){_renderResult(R);
   track(viaLink?"open_shared_result":"complete_test",{day_stem:R.I.kr,main_god:GROUPS[R.A.dom].k,weak_element:EL_NAMES[R.A.weak],job_group:R.st.j>=0?JOBS[R.st.j][2]:"기타",has_hour:R.A.hp?"yes":"no"});};
 let _started=false;
 $("#next").addEventListener("click",()=>{if(!_started&&step===1){_started=true;track("start_test");}});
+// ---------- 퍼널 · 클릭 로그 (익명) ----------
+const STEP_NAMES=["1_basic","2_job","3_strengths","4_interests"];
+const seenStep=new Set();
+function stepView(){const n=STEP_NAMES[step];if(n&&!seenStep.has(n)){seenStep.add(n);track("step_view",{step_name:n,step_no:step+1});}}
+const _renderStep=renderStep;
+renderStep=function(){_renderStep();if(step>0)stepView();};
+// 화면 구간 노출 (한 번씩만)
+const seenSec=new Set();
+const io=("IntersectionObserver" in window)?new IntersectionObserver(es=>es.forEach(e=>{if(!e.isIntersecting)return;const n=e.target.dataset.sec;io.unobserve(e.target);
+  if(n&&!seenSec.has(n)){seenSec.add(n);track("section_view",{section:n});if(n==="test_area")stepView();}}),{threshold:0.35}):null;
+function watch(el,name){if(!el||!io)return;el.dataset.sec=name;io.observe(el);}
+["intro","trap","question","preview","test_area","my_results"].forEach((n,k)=>watch(document.querySelectorAll("#start > section")[k],n));
+function watchResult(){const r=$("#result");
+  watch(r.querySelector("section"),"result_top");
+  watch(r.querySelector(".wg"),"result_saju");
+  r.querySelectorAll(".path").forEach((p,k)=>watch(p,"result_path_"+(k+1)));
+  watch(r.querySelector(".top5"),"result_top5");
+  watch(r.querySelector(".proto"),"result_experiment");}
+const _renderResult2=renderResult;
+renderResult=function(R){_renderResult2(R);["result_top","result_saju","result_path_1","result_path_2","result_path_3","result_top5","result_experiment"].forEach(n=>seenSec.delete(n));setTimeout(watchResult,50);};
+// 버튼 클릭
+document.addEventListener("click",e=>{
+  const el=e.target.closest("button,.job,a");if(!el)return;
+  let name=null,extra={};
+  if(el.id)name=el.id;
+  else if(el.classList.contains("cat")){name="job_category";extra.label=el.textContent.trim();}
+  else if(el.classList.contains("job")){name="job_select";const j=JOBS[+el.dataset.j];if(j){extra.label=j[0];extra.job_group=j[2];}}
+  else if(el.classList.contains("chip")){name=({t:"task_chip",s:"strength_chip",i:"interest_chip"})[el.dataset.k]||"chip";extra.label=el.textContent.trim();extra.selected=el.classList.contains("on")?"off":"on";}
+  else if(el.dataset.open!=null)name="saved_open";
+  else if(el.dataset.del!=null)name="saved_delete";
+  else if(el.dataset.close!=null)name="modal_close";
+  if(!name)return;
+  track("ui_click",{button:name,at_step:$("#result").classList.contains("hidden")?(STEP_NAMES[step]||""):"result",...extra});
+},true);
 renderPreview();renderStep();renderAuth();route();
 </script>
 </body>
