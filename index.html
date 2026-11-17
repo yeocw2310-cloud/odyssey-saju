@@ -237,7 +237,7 @@
 </div>
 
 <div id="result" class="hidden"></div>
-<p class="foot">재미로 보는 테스트예요 · 3갈래 구조는 『Designing Your Life』의 오디세이 플랜에서 빌려왔어요</p>
+<p class="foot">방문 통계를 위해 익명 사용 정보(Google Analytics)를 수집해요. 이름·생년월일은 보내지 않아요.<br>재미로 보는 테스트예요 · 3갈래 구조는 『Designing Your Life』의 오디세이 플랜에서 빌려왔어요</p>
 </div>
 
 <div class="actions hidden" id="actions"><div class="in">
@@ -892,6 +892,7 @@ async function drawCard(){
 async function saveImage(){
   const btn=$("#bImg");btn.disabled=true;
   try{
+    track("save_image");
     const c=await drawCard();
     const blob=await new Promise(r=>c.toBlob(r,"image/png"));
     const filename=`odyssey-${current.st.n}.png`;
@@ -919,11 +920,15 @@ const firebaseConfig={
 };
 const FB_VER="11.0.2";
 let USER=null;
+let GA=null;const GA_Q=[];
+function track(name,params){if(GA)GA(name,params);else if(GA_Q.length<30)GA_Q.push([name,params]);}
 const fbReady=(async()=>{
   try{
     const base=`https://www.gstatic.com/firebasejs/${FB_VER}/`;
     const[appM,fsM,auM]=await Promise.all([import(base+"firebase-app.js"),import(base+"firebase-firestore.js"),import(base+"firebase-auth.js")]);
     const app=appM.initializeApp(firebaseConfig);
+    // 방문 통계 (Google Analytics, 익명)
+    import(base+"firebase-analytics.js").then(async anM=>{if(await anM.isSupported()){const an=anM.getAnalytics(app);GA=(n,p)=>{try{anM.logEvent(an,n,p||{});}catch(e){}};GA_Q.splice(0).forEach(([n,p])=>GA(n,p));}}).catch(()=>{});
     const fb={db:fsM.getFirestore(app),auth:auM.getAuth(app),fs:fsM,au:auM};
     auM.getRedirectResult(fb.auth).catch(()=>{});
     auM.onAuthStateChanged(fb.auth,u=>{USER=u;renderAuth();loadSaved();});
@@ -978,6 +983,7 @@ async function shareLink(){
   const btn=$("#bShare");btn.disabled=true;
   try{
     const url=await getShareUrl();
+    track("share_result");
     if(navigator.share){try{await navigator.share({title:"3갈래 인생 사주",text:`${current.st.n}님의 완전히 다른 5년 3가지`,url});return;}catch(e){if(e.name==="AbortError")return;}}
     try{await navigator.clipboard.writeText(url);toast("링크를 복사했어요");}catch(e){linkModal(url);}
   }finally{btn.disabled=false;}
@@ -991,7 +997,7 @@ async function saveResult(){
   const fb=await fbReady,R=current;
   try{
     await fb.fs.setDoc(fb.fs.doc(fb.db,"users",USER.uid,"saved",docId(R.key)),{input:R.st,name:R.st.n,job:R.job,ymd:R.st.d,savedAt:fb.fs.serverTimestamp()});
-    toast("내 계정에 저장했어요");loadSaved();
+    toast("내 계정에 저장했어요");track("save_result");loadSaved();
   }catch(e){console.warn(e);toast("저장하지 못했어요. 잠시 후 다시 시도해 주세요");}
 }
 async function loadSaved(){
@@ -1030,6 +1036,13 @@ async function route(){
   const p=parseKey(location.hash.slice(1));if(p)renderResult(compute(p));
 }
 window.addEventListener("hashchange",()=>{if(!new URLSearchParams(location.search).get("r"))route();});
+// 결과 화면 진입 · 테스트 시작 집계 (이름·생년월일 같은 개인 정보는 보내지 않아요)
+const _renderResult=renderResult;
+renderResult=function(R){_renderResult(R);
+  const viaLink=!!new URLSearchParams(location.search).get("r");
+  track(viaLink?"open_shared_result":"complete_test",{day_stem:R.I.kr,main_god:GROUPS[R.A.dom].k,weak_element:EL_NAMES[R.A.weak],job_group:R.st.j>=0?JOBS[R.st.j][2]:"기타",has_hour:R.A.hp?"yes":"no"});};
+let _started=false;
+$("#next").addEventListener("click",()=>{if(!_started&&step===1){_started=true;track("start_test");}});
 renderPreview();renderStep();renderAuth();route();
 </script>
 </body>
